@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
         print("flag_ps: one string. flag indicating whether updating ps, 'true' or 'false'. eg. false ");
 
         print("savedata_pre: one string, pre of the file to be saved, the data will be saved in file savedata_pre_alldata.txt. The data structure is \n\
-        Lbetas(num_beta*double)  Js(num_beta*double) total_energy(1*double) errors(5*double, [max_abs_incomp, max_omega_diff, max_J_diff, max_Lbeta_error, max_zeta_error])\n \
+        Lbetas(num_beta*double)  Js(num_beta*double) total_energy(1*double) errors(5*double, [max_abs_incomp, max_omega_diff, max_J_diff, max_Lbeta_error, max_zeta_error]) step(1*int)\n \
         phis(num_comps*num_beta*num_coord: num_comps*num_beta rows and each row includes num_coord values)\n \
         omegas(num_comps*num_beta*num_coord: num_comps*num_beta rows and each row includes num_coord values)\n \
         psi(num_beta*num_coord: num_beta rows and each row includes num_coord values)\n \
@@ -455,7 +455,7 @@ int main(int argc, char *argv[])
     print(flag_save_separate_string);
 
     // all acceptances are 0 except acceptance_omega
-    std::tuple<double, double, double, double, double> errors1 = Gibbs_dynamics(
+    std::tuple<double, double, double, double, double, int> errors1 = Gibbs_dynamics(
         phi_means,
         chis,
         Ls,
@@ -484,7 +484,7 @@ int main(int argc, char *argv[])
         threshold_Lbeta,
         threshold_zeta);
 
-    std::tuple<double, double, double, double, double> errors = Gibbs_dynamics(
+    std::tuple<double, double, double, double, double, int> errors = Gibbs_dynamics(
         phi_means,
         chis,
         Ls,
@@ -537,19 +537,23 @@ int main(int argc, char *argv[])
     {
         for (int itr_beta = 0; itr_beta < num_beta; itr_beta++)
         {
+            myfile << std::setprecision(14);
             myfile << Lbetas[itr_beta] << ' ';
         }
         for (int itr_beta = 0; itr_beta < num_beta; itr_beta++)
         {
+            // myfile << std::setprecision(14);
             myfile << Js[itr_beta] << ' ';
         }
 
+        // myfile << std::setprecision(14);
         myfile << total_energy << ' ';
         myfile << std::get<0>(errors) << ' ';
         myfile << std::get<1>(errors) << ' ';
         myfile << std::get<2>(errors) << ' ';
         myfile << std::get<3>(errors) << ' ';
         myfile << std::get<4>(errors) << ' ';
+        myfile << std::get<5>(errors) << ' ';
         myfile << std::endl;
         for (int itr_comp = 0; itr_comp < num_comps; itr_comp++)
         {
@@ -557,6 +561,7 @@ int main(int argc, char *argv[])
             {
                 for (int itr_coord = 0; itr_coord < num_coord; itr_coord++)
                 {
+                    // myfile << std::setprecision(14);
                     myfile << phis[itr_comp][itr_beta][itr_coord] << ' ';
                 }
                 myfile << std::endl;
@@ -569,6 +574,7 @@ int main(int argc, char *argv[])
             {
                 for (int itr_coord = 0; itr_coord < num_coord; itr_coord++)
                 {
+                    // myfile << std::setprecision(14);
                     myfile << omegas[itr_comp][itr_beta][itr_coord] << ' ';
                 }
                 myfile << std::endl;
@@ -579,6 +585,7 @@ int main(int argc, char *argv[])
         {
             for (int itr_coord = 0; itr_coord < num_coord; itr_coord++)
             {
+                // myfile << std::setprecision(14);
                 myfile << psi[itr_beta][itr_coord] << ' ';
             }
             myfile << std::endl;

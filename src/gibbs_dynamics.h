@@ -17,7 +17,7 @@ double cal_energy(
     Vec &local_energy);
 
 // Main function implementing Gibbs dynamics
-std::tuple<double, double, double, double, double>
+std::tuple<double, double, double, double, double, int>
 Gibbs_dynamics(
     const Vec &phi_means,
     const Vec2D &chis,
@@ -780,10 +780,10 @@ Gibbs_dynamics(
 
         if (max_abs_incomp < threshold_incomp && max_omega_diff < threshold_omega && max_J_diff < threshold_J && max_Lbeta_error < threshold_Lbeta && max_zeta_error < threshold_zeta)
         {
-            return std::make_tuple(max_abs_incomp, max_omega_diff, max_J_diff, max_Lbeta_error, max_zeta_error);
+            return std::make_tuple(max_abs_incomp, max_omega_diff, max_J_diff, max_Lbeta_error, max_zeta_error, istep);
         }
     }
-    return std::make_tuple(max_abs_incomp, max_omega_diff, max_J_diff, max_Lbeta_error, max_zeta_error);
+    return std::make_tuple(max_abs_incomp, max_omega_diff, max_J_diff, max_Lbeta_error, max_zeta_error,steps_inner);
 }
 
 double cal_energy(
