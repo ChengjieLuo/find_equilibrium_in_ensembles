@@ -17,10 +17,16 @@ for chi in [-7.0,-5.0]:
     for zp in [0.8]:
         for zm in [-0.2]:
             num_comps=5
-            num_beta=1
+            num_beta=2
             num_coord=128
 
             # chi=-5
+            chis=np.zeros((num_comps,num_comps))
+            chis[0,1]=chis[1,0]=chi
+            chis-=np.min(chis)
+
+            
+
             Ls=np.array([10.,10.,1.,1.,1.])
 
             zs=np.array([zp ,zm, -1.0 ,1.0, 0.0])
@@ -75,6 +81,7 @@ for chi in [-7.0,-5.0]:
             threshold_zeta=1e-7
 
             ###convert vectors to strings
+            chis_str=" "
             phi_means_str=" "
             Ls_str=" "
             zs_str=" "
@@ -84,14 +91,17 @@ for chi in [-7.0,-5.0]:
                 Ls_str=Ls_str+f"{Ls[i]:.15f} "
                 zs_str=zs_str+f"{zs[i]:.15f} "
                 kappas_str=kappas_str+f"{kappas[i]:.15f} "
+            for i in range(num_comps):
+                for j in range(num_comps):
+                    chis_str=chis_str+f"{chis[i,j]:.15f} "
 
 
-            savedata_pre= f"{num_comps}_{num_beta}_{num_coord}_{phi_means_str}_{chi}_{Ls_str}_{zs_str}_{kappas_str}_{v}_{omega_type}_{omega_value}_{steps_inner1}_{steps_inner2}_{acceptance_omega}_{acceptance_J}_{acceptance_Lbeta}_{acceptance_zeta}_{Js_type}_{Js_value}_{Lbeta_type}_{Lbeta_value}_{zetas_type}_{zetas_value}_{flag_C}_{C}_{ps_type}_{ps_value}_{flag_zetas}_{flag_ps}_{flag_save_separate}_{threshold_incomp}_{threshold_omega}_{threshold_J}_{threshold_Lbeta}_{threshold_zeta}"
+            savedata_pre= f"{num_comps}_{num_beta}_{num_coord}_{phi_means_str}_{chis_str}_{Ls_str}_{zs_str}_{kappas_str}_{v}_{omega_type}_{omega_value}_{steps_inner1}_{steps_inner2}_{acceptance_omega}_{acceptance_J}_{acceptance_Lbeta}_{acceptance_zeta}_{Js_type}_{Js_value}_{Lbeta_type}_{Lbeta_value}_{zetas_type}_{zetas_value}_{flag_C}_{C}_{ps_type}_{ps_value}_{flag_zetas}_{flag_ps}_{flag_save_separate}_{threshold_incomp}_{threshold_omega}_{threshold_J}_{threshold_Lbeta}_{threshold_zeta}"
 
             # import re
             # savedata_pre=re.sub(' +','_',savedata_pre)
 
-            savedata_pre= f"zs{zs_str}_chi{chi}"
+            savedata_pre= f"zs{zs_str}_chi{chi}_numbeta{num_beta}"
             savedata_pre='_'.join(savedata_pre.split(' '))
 
             print(f"{savedata_pre=}")
@@ -101,7 +111,8 @@ for chi in [-7.0,-5.0]:
 
             # command=f"OMP_NUM_THREADS=1; qsub -S /bin/bash -b y -o out/out{savedata_pre}.txt -e err/err{savedata_pre}.txt -q teutates.q -N recon0 -cwd ./solve_gibbs_with_input.out {num_comps} {num_beta} {num_coord} {phi_means_str} {chi} {Ls_str} {zs_str} {kappas_str} {v} {omega_type} {omega_value} {steps_inner1} {steps_inner2} {acceptance_omega} {acceptance_J} {acceptance_Lbeta} {acceptance_zeta} {Js_type} {Js_value} {Lbeta_type} {Lbeta_value} {zetas_type} {zetas_value} {flag_C} {C} {ps_type} {ps_value} {flag_zetas} {flag_ps} {savedata_folder+savedata_pre} {flag_save_separate}"
 
-            command=f"./solve_gibbs_with_input.out {num_comps} {num_beta} {num_coord} {phi_means_str} {chi} {Ls_str} {zs_str} {kappas_str} {v} {omega_type} {omega_value} {steps_inner1} {steps_inner2} {acceptance_omega} {acceptance_J} {acceptance_Lbeta} {acceptance_zeta} {Js_type} {Js_value} {Lbeta_type} {Lbeta_value} {zetas_type} {zetas_value} {flag_C} {C} {ps_type} {ps_value} {flag_zetas} {flag_ps} {savedata_folder+savedata_pre} {flag_save_separate} {threshold_incomp} {threshold_omega} {threshold_J} {threshold_Lbeta} {threshold_zeta}"
+            exe='../src/solve_gibbs_with_input.out'
+            command=f"{exe} {num_comps} {num_beta} {num_coord} {phi_means_str} {chis_str} {Ls_str} {zs_str} {kappas_str} {v} {omega_type} {omega_value} {steps_inner1} {steps_inner2} {acceptance_omega} {acceptance_J} {acceptance_Lbeta} {acceptance_zeta} {Js_type} {Js_value} {Lbeta_type} {Lbeta_value} {zetas_type} {zetas_value} {flag_C} {C} {ps_type} {ps_value} {flag_zetas} {flag_ps} {savedata_folder+savedata_pre} {flag_save_separate} {threshold_incomp} {threshold_omega} {threshold_J} {threshold_Lbeta} {threshold_zeta}"
 
             print("command=")
             print(command)

@@ -1,0 +1,2 @@
+print("Lbeta_type: one string, type of Lbeta input, 'file' or 'equal'. eg. equal");
+        print("Lbeta_value: one string or one double,\n \t if Lbeta_type is 'file', then the Lbeta_value is the filename which includes Lbetas, there should be num_beta values in the file;\n \t if type is 'equal', then the Lbeta_value is the Lbeta value for all compartments;\n \t eg. 30.0");

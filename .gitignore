@@ -286,3 +286,7 @@ TSWLatexianTemp*
 # !main_text_for_APS/*.pdf
 # main_text_for_APS/main.pdf
 # cp_figure.sh
+
+data*
+./data*
+./*/data*
