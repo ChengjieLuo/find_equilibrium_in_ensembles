@@ -101,6 +101,8 @@ int main(int argc, char *argv[])
     //     }
     // }
 
+    
+
     for (int itr_comp = 0; itr_comp < num_comps; itr_comp++)
     {
         for (int itr_comp2 = 0; itr_comp2 < num_comps; itr_comp2++)
@@ -108,6 +110,7 @@ int main(int argc, char *argv[])
             chis[itr_comp][itr_comp2] = std::stod(argv[arg_index++]);
         }
     }
+
 
     Vec Ls(num_comps, 0.0);
     for (int itr_comp = 0; itr_comp < num_comps; itr_comp++)
@@ -128,6 +131,9 @@ int main(int argc, char *argv[])
     }
 
     double v = std::stod(argv[arg_index++]);
+
+
+ 
 
     Vec3D omegas = std::vector<std::vector<std::vector<double>>>(num_comps, std::vector<std::vector<double>>(num_beta, std::vector<double>(num_coord, 0.0)));
 
@@ -318,9 +324,10 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+
     double C = std::stod(argv[arg_index++]);
 
-    Vec ps = std::vector<double>(num_comps, 1.0);
+    Vec ps = std::vector<double>(num_beta, 0.0);
     std::string flag_ps_type = argv[arg_index++];
     if (flag_ps_type == "file")
     {
@@ -453,6 +460,7 @@ int main(int argc, char *argv[])
     print(threshold_zeta);
     print("flag_save_separate_string");
     print(flag_save_separate_string);
+
 
     // all acceptances are 0 except acceptance_omega
     std::tuple<double, double, double, double, double, int> errors1 = Gibbs_dynamics(

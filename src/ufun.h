@@ -118,7 +118,7 @@ ComplexArray FourierTransform1D(const ComplexArray &input)
         in[i][0] = input[i].real();
         in[i][1] = input[i].imag();
     }
-
+    
     // Create plan for forward DFT
     fftw_plan plan = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
