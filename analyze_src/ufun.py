@@ -3,12 +3,26 @@ import matplotlib.pyplot as plt
 np.seterr(divide='ignore')
 
 def loadfile(filename,num_comp,num_beta,num_coord):
-    data=np.loadtxt(filename,usecols=np.arange(2*num_beta+1+5+1))[0]
+    if (2*num_beta+1+5+1<num_coord):
+        data=np.loadtxt(filename,usecols=np.arange(2*num_beta+1+5+1))[0]
+    else:
+        with open(filename) as f:
+            # lines = (line for line in f if not line.startswith('#'))
+            # FH = np.loadtxt(lines, delimiter=',', skiprows=1)
+            for iline, line in enumerate(f):
+                if iline==0:
+                    data=np.array(line.split(),dtype=float)
+                    break
+            # print(f"data={data}")
+
+
     Lbetas=data[:num_beta]
     Js=data[num_beta:2*num_beta]
     total_energy=data[2*num_beta]
     errors=data[2*num_beta+1:2*num_beta+1+5]
     step=data[2*num_beta+1+5]
+            
+
     data=np.loadtxt(filename,skiprows=1)
     # print(data.shape)
     phis=data[:num_comp*num_beta].reshape((num_comp,num_beta,num_coord))
@@ -22,13 +36,17 @@ def analyze_from_filename(filename,num_comp,num_beta,num_coord):
     Lbetas,omegas,phis,psi,Js,total_energy,errors,step=loadfile(filename,num_comp,num_beta,num_coord)
 
     properties=['r-','b-','r--','b--','k:']
+    properties2=['ro','bo','r*','b*','ks']
     names=['p+','p-','e-','e+','S']
 
     for itr_beta in range(num_beta):
         xs=np.arange(num_coord)*Lbetas[itr_beta]/num_coord
         plt.figure()
         for itr_comp in range(num_comp):
-            plt.plot(xs,phis[itr_comp,itr_beta],properties[itr_comp],label=str(names[itr_comp]))
+            if(len(xs)>1):
+                plt.plot(xs,phis[itr_comp,itr_beta],properties[itr_comp],label=str(names[itr_comp]))
+            else:
+                plt.plot(xs,phis[itr_comp,itr_beta],properties2[itr_comp],label=str(names[itr_comp]))
         plt.legend()
         plt.title(rf'$\beta={itr_beta}$')
     plt.show()

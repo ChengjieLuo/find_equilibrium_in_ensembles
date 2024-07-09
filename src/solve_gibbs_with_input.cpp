@@ -4,6 +4,8 @@
 int main(int argc, char *argv[])
 {
 
+    // print("hahahahaha");
+
     if (argc < 3)
     {
         print("./solve_gibbs_with_input.out {num_comps} {num_beta} {num_coord} {phi_means_str} {chis_str} {Ls_str} {zs_str} {kappas_str} {v} {omega_type} {omega_value} {steps_inner1} {steps_inner2} {acceptance_omega} {acceptance_J} {acceptance_Lbeta} {acceptance_zeta} {Js_type} {Js_value} {Lbeta_type} {Lbeta_value} {zetas_type} {zetas_value} {flag_C} {C} {ps_type} {ps_value} {flag_zetas} {flag_ps} {savedata_pre} {flag_save_separate} {threshold_incomp} {threshold_omega} {threshold_J} {threshold_Lbeta} {threshold_zeta}");
@@ -175,6 +177,24 @@ int main(int argc, char *argv[])
             }
         }
     }
+    else if (flag_omega_type == "random_randseed")
+    {
+        double amplitude = std::stod(argv[arg_index++]);
+        auto seed=std::random_device()();
+        std::cout<<"seed="<<seed<<std::endl;
+        std::default_random_engine generator(seed);
+        std::normal_distribution<double> distribution(0.0, amplitude);
+        for (int itr_comp = 0; itr_comp < num_comps; itr_comp++)
+        {
+            for (int itr_beta = 0; itr_beta < num_beta; itr_beta++)
+            {
+                for (int itr_coord = 0; itr_coord < num_coord; itr_coord++)
+                {
+                    omegas[itr_comp][itr_beta][itr_coord] = distribution(generator);
+                }
+            }
+        }
+    }
     else if (flag_omega_type == "random_coord_independent")
     {
         double amplitude = std::stod(argv[arg_index++]);
@@ -192,6 +212,7 @@ int main(int argc, char *argv[])
             }
         }
     }
+
 
     Vec3D phis = std::vector<std::vector<std::vector<double>>>(num_comps, std::vector<std::vector<double>>(num_beta, std::vector<double>(num_coord, 0.0)));
     // print("phis=");
@@ -462,6 +483,36 @@ int main(int argc, char *argv[])
     print(flag_save_separate_string);
 
 
+    
+
+
+
+    bool SAVE_INITIAL_OMEGA=1;
+    if(SAVE_INITIAL_OMEGA)
+    {
+        std::ofstream myfile1;
+        myfile1.open(filenamepre + "_omegas_init.txt", std::ofstream::out);
+        if (myfile1.is_open())
+        {
+            for (int itr_comp = 0; itr_comp < num_comps; itr_comp++)
+            {
+                for (int itr_beta = 0; itr_beta < num_beta; itr_beta++)
+                {
+                    for (int itr_coord = 0; itr_coord < num_coord; itr_coord++)
+                    {
+                        myfile1 << std::setprecision(14);
+                        myfile1 << omegas[itr_comp][itr_beta][itr_coord] << ' ';
+                    }
+                    myfile1 << std::endl;
+                }
+            }
+
+            myfile1.close();
+        }
+    }
+
+
+    bool flag_oneperiod=true;
     // all acceptances are 0 except acceptance_omega
     std::tuple<double, double, double, double, double, int> errors1 = Gibbs_dynamics(
         phi_means,
@@ -519,7 +570,8 @@ int main(int argc, char *argv[])
         threshold_omega,
         threshold_J,
         threshold_Lbeta,
-        threshold_zeta);
+        threshold_zeta,
+        flag_oneperiod);
 
     Vec local_energy(num_beta, 0.0);
     double total_energy = cal_energy(

@@ -45,7 +45,8 @@ Gibbs_dynamics(
     double threshold_omega = 1e-8,
     double threshold_J = 1e-6,
     double threshold_Lbeta = 1e-8,
-    double threshold_zeta = 1e-7)
+    double threshold_zeta = 1e-7,
+    bool flag_oneperiod = false)
 {
     std::default_random_engine generator(0);
 
@@ -390,30 +391,44 @@ Gibbs_dynamics(
         int flag_bad_J = 0;
         for (int itr_beta = 0; itr_beta < num_beta; ++itr_beta)
         {
-            if (Js[itr_beta] < 1e-3)
+            if (Js[itr_beta] < 1e-3) // replace the compartment by its neighbor
             {
                 flag_bad_J = 1;
-                Js[itr_beta] = 1.0;
-                // give random omegas
-                Lbetas[itr_beta] = 50.0;
-                zetas[itr_beta] = 0.0;
-                double amplitude = 5.0;
 
-                std::normal_distribution<double> distribution(0.0, amplitude);
+                // double amplitude = 5.0;
+                // std::normal_distribution<double> distribution(0.0, amplitude);
+                // for (int itr_comp = 0; itr_comp < num_comps; itr_comp++)
+                // {
+                //     for (int itr_coord = 0; itr_coord < num_coord; itr_coord++)
+                //     {
+                //         omegas[itr_comp][itr_beta][itr_coord] = distribution(generator);
+                //     }
+                // }
+
+                int itr_beta_copied = itr_beta - 1;
+                if (itr_beta_copied < 0)
+                {
+                    itr_beta_copied += num_beta;
+                }
+
                 for (int itr_comp = 0; itr_comp < num_comps; itr_comp++)
                 {
                     for (int itr_coord = 0; itr_coord < num_coord; itr_coord++)
                     {
-                        omegas[itr_comp][itr_beta][itr_coord] = distribution(generator);
+                        omegas[itr_comp][itr_beta][itr_coord] = omegas[itr_comp][itr_beta_copied][itr_coord];
                     }
                 }
+
+                Js[itr_beta] = Js[itr_beta_copied];
+                Lbetas[itr_beta] = Lbetas[itr_beta_copied];
+                zetas[itr_beta] = zetas[itr_beta_copied];
             }
         }
         if (flag_bad_J > 0)
         {
             print("reproduce a J(beta) and omega");
             // run with 0 acceptances
-            Gibbs_dynamics(
+            std::tuple<double, double, double, double, double, int> errorsinside1 = Gibbs_dynamics(
                 phi_means,
                 chis,
                 Ls,
@@ -435,10 +450,14 @@ Gibbs_dynamics(
                 flag_C,
                 flag_zetas,
                 flag_ps,
-                C);
+                C,
+                threshold_incomp,
+                threshold_omega,
+                threshold_J,
+                threshold_Lbeta,
+                threshold_zeta);
 
-            // run the remaining steps
-            Gibbs_dynamics(
+            std::tuple<double, double, double, double, double, int> errorsinside2 = Gibbs_dynamics(
                 phi_means,
                 chis,
                 Ls,
@@ -460,8 +479,17 @@ Gibbs_dynamics(
                 flag_C,
                 flag_zetas,
                 flag_ps,
-                C);
-            break;
+                C,
+                threshold_incomp,
+                threshold_omega,
+                threshold_J,
+                threshold_Lbeta,
+                threshold_zeta,
+                flag_oneperiod);
+
+            return errorsinside2;
+
+            // break;
         }
 
         max_omega_diff = 0.0;
@@ -778,12 +806,40 @@ Gibbs_dynamics(
             std::cout << std::endl;
         }
 
-        if (max_abs_incomp < threshold_incomp && max_omega_diff < threshold_omega && max_J_diff < threshold_J && max_Lbeta_error < threshold_Lbeta && max_zeta_error < threshold_zeta)
+        ////// if there are more than one peaks, we rescale to one period.
+        if ((istep + 1) % 10000 == 0 && istep > 10000 && flag_oneperiod)
         {
-            return std::make_tuple(max_abs_incomp, max_omega_diff, max_J_diff, max_Lbeta_error, max_zeta_error, istep);
+            for (int itr_beta = 0; itr_beta < num_beta; ++itr_beta)
+            {
+                // print("size of omega [itr_beta][num_comps - 1]");
+                // int size = (omegas[num_comps - 1][itr_beta]).size();
+                // print(size);
+                int period = find_period(omegas[num_comps - 1][itr_beta], num_coord);
+                // print("period=");
+                // print(period);
+
+                if (period > 1)
+                {
+                    print("period=");
+                    print(period);
+                    print("rescale the profile");
+                    for (int icomp = 0; icomp < num_comps; icomp++)
+                    {
+                        rescale(omegas[icomp][itr_beta], period, num_coord);
+                    }
+                    Lbetas[itr_beta] /= period;
+                }
+            }
+        }
+        else
+        {
+            if (max_abs_incomp < threshold_incomp && max_omega_diff < threshold_omega && max_J_diff < threshold_J && max_Lbeta_error < threshold_Lbeta && max_zeta_error < threshold_zeta)
+            {
+                return std::make_tuple(max_abs_incomp, max_omega_diff, max_J_diff, max_Lbeta_error, max_zeta_error, 1); // the last value is 1 if converged, else is 0
+            }
         }
     }
-    return std::make_tuple(max_abs_incomp, max_omega_diff, max_J_diff, max_Lbeta_error, max_zeta_error,steps_inner);
+    return std::make_tuple(max_abs_incomp, max_omega_diff, max_J_diff, max_Lbeta_error, max_zeta_error, 0);
 }
 
 double cal_energy(

@@ -19,7 +19,6 @@ typedef std::vector<std::vector<std::vector<double>>> Vec3D;
 typedef std::complex<double> Complex;
 typedef std::vector<Complex> ComplexArray;
 
-
 void print(int a)
 {
     std::cout << a << std::endl;
@@ -34,13 +33,13 @@ void print(double a)
     return;
 }
 
-void print(const char*  a)
+void print(const char *a)
 {
     std::cout << a << std::endl;
     return;
 }
 
-void print(char  a[])
+void print(char a[])
 {
     std::cout << a << std::endl;
     return;
@@ -48,7 +47,7 @@ void print(char  a[])
 
 void print(const std::string a)
 {
-     std::cout << a << std::endl;
+    std::cout << a << std::endl;
     return;
 }
 
@@ -118,7 +117,7 @@ ComplexArray FourierTransform1D(const ComplexArray &input)
         in[i][0] = input[i].real();
         in[i][1] = input[i].imag();
     }
-    
+
     // Create plan for forward DFT
     fftw_plan plan = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
@@ -196,13 +195,12 @@ ComplexArray Convolution(const ComplexArray &X, const ComplexArray &K)
     return Y;
 }
 
-
 Vec Convolution(const Vec &Xr, const Vec &Kr)
 {
     int N = Xr.size();
     // print("N=");
     // print(N);
-    ComplexArray X(N),K(N),Y(N);
+    ComplexArray X(N), K(N), Y(N);
     for (int i = 0; i < N; ++i)
     {
         X[i].real(Xr[i]);
@@ -210,16 +208,15 @@ Vec Convolution(const Vec &Xr, const Vec &Kr)
         K[i].real(Kr[i]);
         K[i].imag(0.0);
     }
-    Y=Convolution(X, K);
+    Y = Convolution(X, K);
 
-    Vec Yr(N,0);
+    Vec Yr(N, 0);
     for (int i = 0; i < N; ++i)
     {
-        Yr[i]=Y[i].real();
+        Yr[i] = Y[i].real();
     }
     return Yr;
 }
-
 
 // Function to calculate frequency values
 std::vector<double> calculateFrequencies(double samplingRate, int numDataPoints)
@@ -253,42 +250,112 @@ std::vector<double> calculateFrequencies(double samplingRate, int numDataPoints)
     return frequencies;
 }
 
+int find_period(const Vec &phi, int num_coord)
+{
+    int N = phi.size();
+    if (num_coord != N)
+    {
+        print("num_coord=");
+        print(num_coord);
+        print("N=");
+        print(N);
+        print("error in the shape of phi");
+    }
+    ComplexArray X(N), Y(N);
+    for (int i = 0; i < N; ++i)
+    {
+        X[i].real(phi[i]);
+        X[i].imag(0.0);
+        // K[i].real(Kr[i]);
+        // K[i].imag(0.0);
+    }
 
+    Y = FourierTransform1D(X);
+    Vec absY = Vec(N, 0.0);
+    for (int i = 0; i < N; ++i)
+    {
 
+        absY[i] = std::sqrt(Y[i].real() * Y[i].real() + Y[i].imag() * Y[i].imag());
+        // print(absY[i]);
+        // print(Y[i].real());
+        // print(Y[i].imag());
+    }
+
+    int index_max1 = 0;
+    int index_max2 = 0;
+    double maxabsY1 = absY[index_max1];
+    double maxabsY2 = absY[index_max2];
+
+    for (int i = 0; i < N; ++i)
+    {
+        if (absY[i] >= maxabsY1)
+        {
+            maxabsY1 = absY[i];
+            index_max2 = index_max1;
+            index_max1 = i;
+        }
+    }
+
+    Vec fre = calculateFrequencies(1.0, num_coord);
+    // print("fre=");
+    // print(fre);
+    // print("index2=");
+    // print(index_max2);
+
+    double periods = N * std::abs(fre[index_max2]);
+    // print("periods=");
+    // print(periods);
+    return int(periods + 0.0000001);
+}
+
+void rescale(Vec &phi, int periods, int num_coord)
+{
+    Vec oldphi = phi;
+
+    int Nold = num_coord / periods;
+
+    for (int icoord = 0; icoord < Nold; icoord++)
+    {
+        for (int index = 0; index < periods; index++)
+        {
+            phi[periods * icoord + index] = oldphi[icoord] + (oldphi[icoord + 1] - oldphi[icoord]) / periods * index;
+        }
+    }
+}
 
 // // Example input arrays
-    // ComplexArray X = {Complex(1, 0), Complex(1, 0), Complex(1, 0), Complex(1, 0),
-    //                   Complex(0, 0), Complex(0, 0), Complex(0, 0), Complex(0, 0)};
-    // ComplexArray K = {Complex(1, 0), Complex(0.5, 0), Complex(0.25, 0), Complex(0, 0),
-    //                   Complex(0, 0), Complex(0, 0), Complex(0, 0), Complex(0, 0)};
+// ComplexArray X = {Complex(1, 0), Complex(1, 0), Complex(1, 0), Complex(1, 0),
+//                   Complex(0, 0), Complex(0, 0), Complex(0, 0), Complex(0, 0)};
+// ComplexArray K = {Complex(1, 0), Complex(0.5, 0), Complex(0.25, 0), Complex(0, 0),
+//                   Complex(0, 0), Complex(0, 0), Complex(0, 0), Complex(0, 0)};
 
-    // // Assuming K is already in the frequency domain, otherwise you would need to Fourier Transform K
-    // // K = FourierTransform1D(K);
+// // Assuming K is already in the frequency domain, otherwise you would need to Fourier Transform K
+// // K = FourierTransform1D(K);
 
-    // // Perform convolution
-    // ComplexArray Y = Convolution(X, K);
+// // Perform convolution
+// ComplexArray Y = Convolution(X, K);
 
-    // std::cout << "X :" << std::endl;
-    // for (const auto& val : X) {
-    //     std::cout << val << std::endl;
-    // }
-    // std::cout << "K :" << std::endl;
-    // for (const auto& val : K) {
-    //     std::cout << val << std::endl;
-    // }
-    // // Print the result
-    // std::cout << "Convolution result:" << std::endl;
-    // for (const auto& val : Y) {
-    //     std::cout << val << std::endl;
-    // }
+// std::cout << "X :" << std::endl;
+// for (const auto& val : X) {
+//     std::cout << val << std::endl;
+// }
+// std::cout << "K :" << std::endl;
+// for (const auto& val : K) {
+//     std::cout << val << std::endl;
+// }
+// // Print the result
+// std::cout << "Convolution result:" << std::endl;
+// for (const auto& val : Y) {
+//     std::cout << val << std::endl;
+// }
 
-    // double samplingRate = 1;
-    // int numDataPoints = 8;
-    // std::vector<double> freq = calculateFrequencies(samplingRate, numDataPoints);
-    // for (const auto &val : freq)
-    // {
-    //     std::cout << val << std::endl;
-    // }
+// double samplingRate = 1;
+// int numDataPoints = 8;
+// std::vector<double> freq = calculateFrequencies(samplingRate, numDataPoints);
+// for (const auto &val : freq)
+// {
+//     std::cout << val << std::endl;
+// }
 
 // #include <iostream>
 // #include <fftw3.h>
