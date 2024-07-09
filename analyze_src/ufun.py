@@ -218,12 +218,16 @@ def check_eq(phi_means,
     return entropyterm, chiterm, psizsphiterm, kappaterm,nablapsiterm, zeroterm, total_energy, omega_temp
 
 
-def compare_properties(p1,p2,threshold):
-    for i in range(len(p1)):
+def compare_properties(p1,p2,thresholdphi,thresholdL):
+    for i in range(len(p1)-1):
         p1i=p1[i]
         p2i=p2[i]
-        if np.max(np.abs(p1i-p2i))>threshold:
+        if np.max(np.abs(p1i-p2i))>thresholdphi:
             return 0
+    i=len(p1)-1
+    if np.max(np.abs(p1i-p2i))>thresholdL and np.max(np.abs(p1[0]-p1[1]))>thresholdphi: ### In principle L should be the same. However, if the profiles are flat, then the two Ls are no need to be the same. 
+        return 0
+    
     return 1
 
 def get_phases(phi_means,
@@ -238,7 +242,8 @@ def get_phases(phi_means,
     Js,
     Lbetas):
 
-    threshold=1e-4
+    thresholdphi=1e-2
+    thresholdL=1
 
     num_comps,  num_beta, num_coord= omegas.shape[:3]
 
@@ -256,11 +261,17 @@ def get_phases(phi_means,
 
         unique_list=[0]
         newJs=[Js[0]]
+        print(f"{Js.shape=}")
         for i in range(1,num_beta):
             flag_new=1
-            for ilist in unique_list:
-                if compare_properties(properties[i],properties[ilist],threshold)==1: ## same phase
-                    newJs[ilist]+=Js[i]
+            for iilist,ilist in enumerate(unique_list):
+                if compare_properties(properties[i],properties[ilist],thresholdphi,thresholdL)==1: ## same phase
+                    print(f'{unique_list=}')
+                    print(f'{ilist=}')
+                    print(f'{i=}')
+                    print(f'{len(newJs)=}')
+                    print(f'{len(Js)=}')
+                    newJs[iilist]+=Js[i]
                     flag_new=0
                     break
             if(flag_new==1):## new phase
@@ -271,18 +282,34 @@ def get_phases(phi_means,
         newpsi=psi[unique_list,:]
         return newphis,newpsi,newJs,unique_list,len(unique_list)
 
-def plot_phis(phis,Lbetas):
+def plot_phis(phis,Lbetas,filename="None",newJs=None):
     num_comps,  num_beta, num_coord= phis.shape[:3]
     properties=['r-','b-','r--','b--','k:']
+    properties2=['ro','bo','r*','b*','ks']
     names=['p+','p-','e-','e+','S']
+
+    fig,axs=plt.subplots(num_beta,1)
+
+    if num_beta==1:
+        axs=[axs]
     for itr_beta in range(num_beta):
         xs=np.arange(num_coord)*Lbetas[itr_beta]/num_coord
-        plt.figure()
+        
         for itr_comp in range(num_comps):
-            plt.plot(xs,phis[itr_comp,itr_beta],properties[itr_comp],label=str(names[itr_comp]))
-        plt.legend()
-        plt.title(rf'$\beta={itr_beta}$')
-    plt.show()           
-            
+            if num_coord>1:
+                axs[itr_beta].plot(xs,phis[itr_comp,itr_beta],properties[itr_comp],label=str(names[itr_comp]))
+            else:
+                axs[itr_beta].plot(xs,phis[itr_comp,itr_beta],properties2[itr_comp],label=str(names[itr_comp]))
+        axs[itr_beta].legend()
+        axs[itr_beta].set_title(rf'$\beta={itr_beta}$')
 
+        if newJs is not None:
+            axs[itr_beta].text(0.0,0.0,f"J={newJs[itr_beta]}")
 
+    if(filename!="None"):
+        fig.savefig(filename,dpi=300)
+        plt.close(0)
+        return 
+    else:
+        plt.show()  
+        plt.close()      
