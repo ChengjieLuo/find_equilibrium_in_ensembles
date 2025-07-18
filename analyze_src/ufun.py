@@ -52,6 +52,76 @@ def analyze_from_filename(filename,num_comp,num_beta,num_coord):
     plt.show()
     return Lbetas,omegas,phis,psi,Js,total_energy,errors,step
 
+def plot_single_file(filename,num_comp,num_beta,num_coord,title='None'):
+    Lbetas,omegas,phis,psi,Js,total_energy,errors,step=loadfile(filename,num_comp,num_beta,num_coord)
+
+    names=filename.replace('_', ' ').replace('/', ' ').split()
+    for i in range(len(names)):
+        if names[i]=='zs':
+            break
+    zs=[]
+    for ip in range(num_comp):
+        zs.append(float(names[i+1+ip]))
+    zs=np.array(zs)
+    print(zs)
+
+    if(num_beta==1):
+        xs=np.arange(num_coord)*Lbetas[0]/num_coord
+        fig,ax=plt.subplots(2,3,figsize=(14,8))
+
+
+        properties=['r-','b-','r--','b--','k:']
+        properties2=['ro','bo','r*','b*','ks']
+        names=['p+','p-','e-','e+','S']
+
+        for itr_beta in range(num_beta):
+            ### plot phi
+            for itr_comp in range(num_comp):
+                if(len(xs)>1):
+                    ax[0,0].plot(xs,phis[itr_comp,itr_beta],properties[itr_comp],label=str(names[itr_comp]))
+                else:
+                    ax[0,0].plot(xs,phis[itr_comp,itr_beta],properties2[itr_comp],label=str(names[itr_comp]))
+            ax[0,0].legend()
+            # ax[0,0].set_title(rf'$\beta={itr_beta}$')
+            ax[0,0].set_xlabel(rf'$x/l_b$')
+            ax[0,0].set_ylabel(rf'$\phi_i$')
+
+            ### plot psi
+            ax[0,1].plot(xs,psi[itr_beta],'k-')
+            ax[0,1].set_xlabel(rf'$x/l_b$')
+            ax[0,1].set_ylabel(rf'$\psi$')
+
+            ### plot z_i phi_i
+            for itr_comp in range(num_comp):
+                if(len(xs)>1):
+                    ax[1,0].plot(xs,zs[itr_comp]*phis[itr_comp,itr_beta],properties[itr_comp],label=str(names[itr_comp]))
+                else:
+                    ax[1,0].plot(xs,zs[itr_comp]*phis[itr_comp,itr_beta],properties2[itr_comp],label=str(names[itr_comp]))
+            ax[1,0].legend()
+            # ax[0,0].set_title(rf'$\beta={itr_beta}$')
+            ax[1,0].set_xlabel(rf'$x/l_b$')
+            ax[1,0].set_ylabel(rf'$z_i\phi_i$')
+
+            ### plot rho
+            ax[1,1].plot(xs,np.einsum('i,ik->k',zs,phis[:,itr_beta]),'k-')
+            ax[1,1].set_xlabel(rf'$x/l_b$')
+            ax[1,1].set_ylabel(rf'$\rho$')
+
+            ### plot |rho|
+            ax[1,2].plot(xs,np.abs(np.einsum('i,ik->k',zs,phis[:,itr_beta])),'k-')
+            ax[1,2].set_xlabel(rf'$x/l_b$')
+            ax[1,2].set_ylabel(rf'$|\rho|$')
+
+            ### plot rho*psi
+            ax[0,2].plot(xs,psi[itr_beta]*np.einsum('i,ik->k',zs,phis[:,itr_beta]),'k-')
+            ax[0,2].set_xlabel(rf'$x/l_b$')
+            ax[0,2].set_ylabel(rf'$\rho\psi$')
+    if (title=='None'):
+        pass
+    else:
+        fig.suptitle(title)
+    fig.tight_layout()
+    plt.show()
 
 
 
@@ -305,6 +375,8 @@ def plot_phis(phis,Lbetas,filename="None",newJs=None):
 
         if newJs is not None:
             axs[itr_beta].text(0.0,0.0,f"J={newJs[itr_beta]}")
+        axs[itr_beta].set_xlabel(r'$x/\ell_\mathrm{B}$')
+        axs[itr_beta].set_ylabel(r'$\phi_i$')
 
     if(filename!="None"):
         fig.savefig(filename,dpi=300)
